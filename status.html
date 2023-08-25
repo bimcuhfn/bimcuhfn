@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Servers Information</title>
+    <link rel="stylesheet" href="./assets/css/status.css">
+</head>
+
+<body>
+
+    <h1>Servers Information</h1>
+    <div class="region-buttons">
+        <button class="region-button active-region-button" data-region="all">All</button>
+        <button class="region-button" data-region="OCE">OCE</button>
+        <button class="region-button" data-region="EU">EU</button>
+        <button class="region-button" data-region="NA">NA</button>
+    </div>
+
+    <div id="serverList"></div>
+
+    <script>
+        const regionButtons = document.querySelectorAll('.region-button');
+        regionButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                updateActiveRegionButton(button);
+                updateServerStatus();
+            });
+        });
+
+        // Function to update the active region button
+        function updateActiveRegionButton(activeButton) {
+            regionButtons.forEach(button => {
+                button.classList.remove('active-region-button');
+            });
+            activeButton.classList.add('active-region-button');
+        }
+
+        // Function to filter servers by region
+        function filterServersByRegion(data, selectedRegion) {
+            return data.filter(server => selectedRegion === 'all' || server.region === selectedRegion);
+        }
+
+        // Function to get the playlist name
+        function getPlaylistName(playlist) {
+            if (playlist === 'playlist_low_duos') {
+                return 'One Shot Duos';
+            } else if (playlist === 'playlist_defaultsolo') {
+                return 'Solo';
+            } else if (playlist === 'playlist_defaultduo') {
+                return 'Duos';
+            } else if (playlist === 'playlist_low_solo') {
+                return 'One Shot Solos';
+            }
+            return playlist;
+        }
+
+        // Function to get the status class for styling
+        function getStatusClass(status) {
+            if (status === 'offline') {
+                return 'status-offline';
+            } else if (status === 'online') {
+                return 'status-online';
+            } else if (status === 'gamestarted') {
+                return 'status-gamestarted';
+            } else if (status === 'gameended') {
+                return 'status-gameended';
+            }
+            return '';
+        }
+
+
+
+        async function updateServerStatus() {
+            try {
+                const response = await fetch('https://43.229.63.55:443/serverStatus');
+                const data = await response.json();
+                const serverListElement = document.getElementById('serverList');
+                const regionSelect = document.querySelector('.active-region-button');
+                const selectedRegion = regionSelect.getAttribute('data-region');
+
+                serverListElement.innerHTML = ''; // Clear previous entries
+
+                const filteredServers = filterServersByRegion(data, selectedRegion);
+
+                filteredServers.forEach(server => {
+                    const serverInfoElement = document.createElement('div');
+                    serverInfoElement.classList.add('server-info');
+
+                    const playlistName = getPlaylistName(server.playlist);
+                    const statusClass = getStatusClass(server.status);
+
+                    serverInfoElement.innerHTML = `
+        <p><strong></strong> <strong>${playlistName}</strong></p>
+        <p><strong>Season:</strong> ${server.seasonint}</p>
+        <div class="player-count">${server.players}/100</div>
+        <div class="status ${statusClass}">${server.status.toUpperCase()}</div>
+      `;
+
+                    serverListElement.appendChild(serverInfoElement);
+                });
+            } catch (error) {
+                console.error('Error fetching server information:', error);
+            }
+        }
+
+        // Call the function immediately and then at intervals
+        updateServerStatus(); // Call immediately
+        setInterval(updateServerStatus, 3000); // Poll every 5 seconds
+    </script>
+
+    <div style="text-align:right;position:fixed;bottom:3px;right:3px;width:100%;z-index:999999;cursor:pointer;line-height:0;display:block;"><a target="_blank" href="https://www.freewebhostingarea.com" title="Free Web Hosting with PHP5 or PHP7"><img alt="Free Web Hosting" src="https://www.freewebhostingarea.com/images/poweredby.png" style="border-width: 0px;width: 180px; height: 45px; float: right;"></a></div>
+</body>
+
+</html>
